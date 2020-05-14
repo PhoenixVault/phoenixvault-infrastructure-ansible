@@ -1,6 +1,12 @@
 mongod --configsvr --replSet rs0 --dbpath /data/db1 
 mongod --configsvr --replSet phoenixrs1 --keyFile /data/db/secret
 echo "127.0.0.1  node1" >> /etc/hosts
+
+echo "64.225.51.56  node1" >> /etc/hosts
+echo "64.225.62.221  node2" >> /etc/hosts
+echo "64.225.49.50  node3" >> /etc/hosts
+
+
 cat /etc/hosts
 db.createUser({  
  user:"mongo-admin",
@@ -38,7 +44,7 @@ mongodb_host_dir: /etc/mongo
 mongodb_datadir: /data/db
 mongodb_logdir: /var/log/mongodb
 
-
+test
 
  - name: Run mongodb container
       docker_container:
@@ -53,3 +59,6 @@ mongodb_logdir: /var/log/mongodb
           - '/etc/mongo:/data/db'
           - '/var/log/mongodb:/var/log/mongodb'
           - '/etc/mongo/secret:/data/db/secret'
+
+
+          rs.add( { host: "node2:27017" } )
