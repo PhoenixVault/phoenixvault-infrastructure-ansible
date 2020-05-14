@@ -1,0 +1,78 @@
+---
+- hosts: config-backups
+  remote_user: root
+  become: true
+  vars_files:
+    -  vars/default.yml
+ 
+
+  tasks:
+    - name: Run mongodb container
+      docker_container:
+        name: '{{ mongodb_config_container_name }}'
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        restart_policy: always
+        state: absent
+        volumes: 
+          - '{{ mongodb_dir_config }}:/data/db'
+
+    - name: Run mongodb container
+      docker_container:
+        name: '{{ mongodb_config_container_name }}'
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        restart_policy: always
+        state: started
+        volumes: 
+          - '{{ mongodb_dir_config }}:/data/db'
+    
+    - name: Install the admin script
+      become: true
+      template:
+        src: "templates/create-admin-config.sh.j2"
+        dest: "/root/create-admin-config.sh"
+        owner: root
+        group: root
+        mode: 700
+
+    - name: Run the add user script
+      become: true
+      command: sh /root/create-admin-config.sh
+
+    - name: Stop mongodb container
+      docker_container:
+        name: '{{ mongodb_config_container_name }}'
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        restart_policy: always
+        state: stopped
+
+    - name: Run mongodb container --configsvr
+      docker_container:
+        name: '{{ mongodb_config_container_name }}'
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        command: 'mongod --configsvr --replSet {{ replica_set_name }} --keyFile {{ mongodb_dir_config }}/secret --dbpath /data/db --port 27017' #--configsvr  --replSet {{ replica_set_name }}' #--keyFile {{ mongodb_datadir }}/secret'
+        restart_policy: always
+        state: started
+        exposed_ports: 27017
+        etc_hosts: >
+          {      
+            "{{ host1 }}": "{{ node1 }}",
+            "{{ host2 }}": "{{ node2 }}",
+            "{{ host3 }}": "{{ node3 }}"
+          }
+        #entrypoint: /entrypoint.sh
+        ports:
+          - "{{ mongodb_port }}:{{ mongodb_port }}"
+        volumes: 
+          - '{{ mongodb_dir_config }}:/data/db'
+          - '{{ mongodb_dir_config }}/secret:{{ mongodb_dir_config }}/secret'
+          -  '/etc/localtime:/etc/localtime:ro'
+          #- '{{ mongodb_host_dir }}/entrypoint.sh:/entrypoint.sh'
+          #- '{{ mongodb_host_dir }}/repset_init.js:/root/repset_init.js'  
+     
+    #- name: Run the add user script
+      #become: true
+      #command: sh /root/primary-init.sh
+
+    #- name: Initialize the replication set
+      #shell: docker exec -it {{ mongodb_config_container_name }} mongo root/repset_init.js 
+

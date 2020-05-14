@@ -1,0 +1,15 @@
+rs.initiate(
+   {
+      _id: "{{ replica_set_name }}",
+      configsvr: true,
+      members: [
+{% for host in groups['configs'] %}
+          { _id: {{ loop.index - 1 }}, host: "{{ hostvars[host]['ansible_nodename'] }}:{{ mongodb_port }}" }
+{%- if loop.last %} {%- elif loop %},
+{% endif %}
+{% endfor %}
+      
+      ]
+   }
+)
+

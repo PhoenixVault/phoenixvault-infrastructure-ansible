@@ -1,0 +1,47 @@
+class Page
+  include Mongoid::Document
+  include Mongoid::Timestamps
+  include Mongoid::Attributes::Dynamic
+
+  include PvIdentifier
+
+  include FileUploader[:file] # Shrine
+
+  # which document does this page belong to?
+  belongs_to :document, optional: true, index: true, counter_cache: true
+
+  # this will be the IMAGE version of the page
+  embeds_one :preview
+
+  # manually entered in keywords for the page
+  embeds_many :keywords
+
+  # let people react to this
+  has_many :reactions
+
+  # let people tag the documents
+  has_many :tags
+
+  # allow people to comment on this
+  has_many :comments
+
+  # allow people to question this
+  has_many :questions
+
+  # allow people to make a private note about this
+  has_many :private_notes
+
+  # this will be the actual page stored individually as a PDF
+  field :file_data, type: Hash # Shrine
+
+  # this will be the extracted PDF/A full text of the uploaded PDF OR the "txt" file contents
+  field :full_text, type: String
+
+  # Run "full_text" through the summarize function with 3 sentences target
+  field :short_summary, type: String
+
+  # Run "full_text" through the summarize function with 12 sentences target
+  field :medium_summary, type: String 
+
+  # Run "full_text" through the summarize function with 33 sentences target
+  field :long_summary, type: String 

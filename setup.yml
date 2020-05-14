@@ -1,0 +1,139 @@
+---
+- hosts: all
+  remote_user: root
+  become: true
+  vars_files:
+    -  vars/default.yml
+
+
+  tasks:
+    - name: Install aptitude using apt
+      apt: name=aptitude state=latest update_cache=yes force_apt_get=yes
+
+    - name: Install required system packages
+      apt: name={{ item }} state=latest update_cache=yes
+      loop: ['apt-transport-https','ca-certificates','curl','software-properties-common',python3-pip,'virtualenv','python3-setuptools']
+    
+    - name: Update ssl database
+      become: true
+      command: update-ca-certificates
+      
+    - name: Add Docker GPG apt key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu bionic stable
+        state: present
+   
+    - name: Ensure {{ mongodb_dir_config }} exist
+      file:
+        name: '{{ mongodb_dir_config }}'
+        state: directory
+
+    - name: Ensure {{ mongodb_dir_shard1 }} exist
+      file:
+        name: '{{ mongodb_dir_shard1 }}'
+        state: directory
+
+    - name: Ensure {{ mongodb_dir_shard2 }} exist
+      file:
+        name: '{{ mongodb_dir_shard2 }}'
+        state: directory
+
+    - name: Ensure {{ mongodb_dir_shard3 }} exist
+      file:
+        name: '{{ mongodb_dir_shard3 }}'
+        state: directory
+
+    - name: Ensure {{ mongodb_dir_router }} exist
+      file:
+        name: '{{ mongodb_dir_router }}'
+        state: directory
+   
+    - name: Install docker module for python
+      pip:
+        name: docker
+    - name: Install mongo using apt
+
+      apt: name=mongodb-clients state=latest update_cache=yes force_apt_get=yes
+ 
+    - name: Copy secret file {{ mongodb_dir_config1 }}
+      copy:
+        src: vars/secret
+        dest: '{{ mongodb_dir_config }}/secret'
+        owner: root
+        group: root
+        mode: 0400
+
+    - name: Copy secret file {{ mongodb_dir_shard1 }}
+      copy:
+        src: vars/secret
+        dest: '{{ mongodb_dir_shard1 }}/secret'
+        owner: root
+        group: root
+        mode: 0400
+
+    - name: Copy secret file {{ mongodb_dir_shard2 }}
+      copy:
+        src: vars/secret
+        dest: '{{ mongodb_dir_shard2 }}/secret'
+        owner: root
+        group: root
+        mode: 0400
+
+    - name: Copy secret file {{ mongodb_dir_shard3 }}
+      copy:
+        src: vars/secret
+        dest: '{{ mongodb_dir_shard3 }}/secret'
+        owner: root
+        group: root
+        mode: 0400
+
+    - name: Copy secret file {{ mongodb_dir_router }}
+      copy:
+        src: vars/secret
+        dest: '{{ mongodb_dir_router }}/secret'
+        owner: root
+        group: root
+        mode: 0400
+        
+    - name: Open ports ufw
+      become: true 
+      ufw: 
+        rule: allow 
+        port: "{{ item }}"
+        proto: tcp
+      with_items: 
+        - ssh
+        - domain
+        - 27017
+        - 27018
+        - 27019  
+        - 27020
+        - 27021
+        
+    - name: Enable ufw
+      become: true
+      ufw: 
+        state: enabled
+        policy: deny
+       
+    - name: Install the docker cleanup script
+      become: true
+      template:
+        src: "templates/docker-cleanup.sh.j2"
+        dest: "/root/docker-cleanup.sh"
+        owner: root
+        group: root
+        mode: 700   
+
+    #- name: Run the docker cleanup script
+      #become: true
+      #command: sh /root/docker-cleanup.sh
+      
+      
+
+    

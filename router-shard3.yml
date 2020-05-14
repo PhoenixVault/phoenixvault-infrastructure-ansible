@@ -1,0 +1,30 @@
+---
+- hosts: routers
+  remote_user: root
+  become: true
+  vars_files:
+    -  vars/default.yml
+ 
+
+  tasks:
+
+    
+    - name: Install the add shard 3 to router script
+      become: true
+      template:
+        src: "templates/add-shard3-router.sh.j2"
+        dest: "/root/add-shard3-router.sh"
+        owner: root
+        group: root
+        mode: 700
+
+    - name: Run the add shard 3 to router script
+      become: true
+      command: sh /root/add-shard3-router.sh
+
+ 
+
+     
+
+
+    

@@ -1,0 +1,30 @@
+---
+- hosts: shard2primary
+  remote_user: root
+  become: true
+  vars_files:
+    -  vars/default.yml
+ 
+
+  tasks:
+
+    
+    - name: Install the init shard 2 script
+      become: true
+      template:
+        src: "templates/init-shard2.sh.j2"
+        dest: "/root/init-shard2.sh"
+        owner: root
+        group: root
+        mode: 700
+
+    - name: Run the init shard 2 script
+      become: true
+      command: sh /root/init-shard2.sh
+
+ 
+
+     
+
+
+    

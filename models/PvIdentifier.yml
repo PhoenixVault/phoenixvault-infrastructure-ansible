@@ -1,0 +1,38 @@
+module PvIdentifier
+  extend ActiveSupport::Concern
+
+  included do
+    # Identifier Field
+    field :identifier, type: String
+
+    # Callbacks
+    before_create :create_identifier
+    before_save :create_identifier
+    before_validation :create_identifier
+
+    # Validations
+    validates :identifier, presence: true, uniqueness: true
+
+    # Index
+    index({identifier: 1}, {unique: true, name: "identifier_index", background: true})
+  end
+
+  def create_identifier
+    return true unless self.identifier.nil?
+    identifier = self.generate_identifier(9)
+    # does it exist?
+    klass = self.class.name.constantize
+    records = klass.where(identifier: identifier).all
+    if records.count == 0
+      self.identifier = identifier
+      return true
+    else
+      return self.create_identifier
+    end
+  end
+
+  # Generates a unique identifier that can be used for shorthand record IDs
+  def generate_identifier(length=9,charset=%w{ 1 2 3 4 6 7 9 A B C D E F G H J K L M N P Q R S T U W X Y Z})
+    (0...length).map{ charset.to_a[rand(charset.size)] }.join
+  end
+end

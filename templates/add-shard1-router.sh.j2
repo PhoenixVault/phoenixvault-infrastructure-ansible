@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker exec -it {{ mongodb_router_container_name }} bash -c "echo 'sh.addShard(\"{{ shard1_set_name }}/{{ host1 }}:{{ mongodb_shard1_port }}\")' | mongo admin -u {{ mongo_admin }} -p {{ mongo_password }}"

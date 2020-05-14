@@ -1,0 +1,12 @@
+#!/bin/bash
+
+echo "Docker Cleanup"
+
+docker stop $(docker ps -a -q)
+
+docker rm $(docker ps -a -q)
+
+docker rmi $(docker images -a -q)
+
+#fail because volume is not a volume
+docker volume rm $(docker volume ls | awk '{print $2}')

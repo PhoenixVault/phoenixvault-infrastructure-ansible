@@ -1,0 +1,24 @@
+#!/bin/bash
+
+docker exec -it phoenix-config bash -c "echo 'rs.initiate(
+   {
+      _id: \"{{ replica_set_name }}\",
+      configsvr: true,
+      members: [
+{% for host in groups['config-primary'] %}
+          { _id: {{ loop.index - 1 }}, host: \"{{ hostvars[host]['ansible_nodename'] }}:{{ mongodb_port }}\" }
+{%- if loop.last %}, {%- elif loop %},
+{% endif %}
+{% endfor %}
+
+{% for host in groups['config-backups'] %}
+          { _id: {{ loop.index }}, host: \"node{{loop.index+1}}:{{ mongodb_port }}\" }
+{%- if loop.last %} {%- elif loop %},
+{% endif %}
+{% endfor %}
+
+      
+      ]
+   }
+)' | mongo -u {{ mongo_admin }} -p {{ mongo_password }}"
+

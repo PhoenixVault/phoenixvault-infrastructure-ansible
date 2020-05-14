@@ -1,0 +1,92 @@
+watch -n0.5 docker ps
+chmod +x entrypoint.sh.j2
+docker exec -it 69 /bin/bash
+docker exec -it $(docker ps | grep ctrl-1 | awk '{print $1}') /bin/bash
+
+ssh-keygen -R 157.245.235.127
+
+mongo --eval printjson(rs.status())
+
+ssh-keygen -t rsa -b 4096
+
+"node1": "138.197.199.207,
+            "node2": "157.245.232.22",
+            "node3": "167.172.214.36"
+
+ssh-copy-id root@138.197.199.207 
+ssh-copy-id root@157.245.232.22
+ssh-copy-id root@167.172.214.36
+
+ssh root@134.122.10.170
+ssh root@134.122.2.218
+ssh root@134.122.10.170
+
+{% for host in groups['config-backups'] %}
+          { _id: {{ loop.index }}, host: \"node{{loop.index+1}}:{{ mongodb_port }}\" }
+{%- if loop.last %} {%- elif loop %},
+{% endif %}
+{% endfor %}
+
+
+
+[config-backups]
+
+Phoenix1!
+
+docker exec -it phoenix-config mongo admin -u mongo_admin -p Phoenix1!
+docker exec -it phoenix-router mongo admin --port 27019 -u mongo_admin -p Phoenix1!
+
+docker exec -it phoenix-shard-us-west mongo admin -u mongo_admin -p Phoenix1!
+docker exec -it phoenix-shard-us-east mongo admin -u mongo_admin -p Phoenix1!
+docker exec -it phoenix-shard-eu-west mongo admin -u mongo_admin -p Phoenix1!
+
+
+docker exec -it mongors1n1 bash -c "echo 'rs.initiate({_id : \"mongors1\", members: [{ _id : 0, host : \"mongors1n1\" },{ _id : 1, host : \"mongors1n2\" },{ _id : 2, host : \"mongors1n3\" }]})' | mongo"
+
+
+docker exec -it phoenix-shard bash -c "echo 'rs.initiate({_id : \"phoenixrs1\", members: [{ _id : 0, host : \"node3\" },{ _id : 1, host : \"node2\" }]})' | mongo admin -u mongodb-admin -p password"
+
+docker exec -it phoenix-shard bash -c "echo 'rs.status()' | mongo admin -u mongodb-admin -p password"
+
+docker exec -it phoenix-router bash -c "echo 'sh.addShard(\"phoenixrs1/node3:27018\")' | mongo admin -u mongodb-admin -p password"
+
+docker exec -it mongos1 bash -c "echo 'sh.shardCollection(\"testDb.testCollection\", {\"shardingField\" : 1})' | mongo "
+
+
+
+docker exec -it phoenix-shard-us-west bash -c "echo 'use phoenixvaul_production' | mongo admin -u mongo_admin -p Phoenix1!"
+
+docker exec -it phoenix-router bash -c "echo 'sh.enableSharding(\"phoenixvaul_production\")' | mongo admin -u mongo_admin -p Phoenix1!"
+
+docker exec -it mongors1n1 bash -c "echo 'db.createCollection(\"phoenixvaul_production.document\")' | mongo admin -u mongo_admin -p Phoenix1!"
+
+docker exec -it phoenix-router bash -c "echo 'sh.shardCollection(\"phoenixvaul_production.document\", {\"shard_key\" : 1})' | mongo "
+
+
+sh.shardCollection("mydb.cities3", { "state": 1} ) 
+sh.addTagRange("mydb.cities3", { state: MinKey }, { state: "CA" }, "Others") 
+
+
+sh.enableSharding("testShard1")
+db.createCollection("testShard1.document")
+sh.addShardTag("phoenixsh1","zone1")
+sh.addShardTag("phoenixsh2","zone2")
+sh.addShardTag("phoenixsh3","zone3")
+sh.shardCollection("testShard1.document",{shard_key:1})
+sh.addTagRange("testShard1.document",{shard_key:"a"},{shard_key:"i"},"zone1")
+sh.addTagRange("testShard1.document",{shard_key:"j"},{shard_key:"r"},"zone2")
+sh.addTagRange("testShard1.document",{shard_key:"s"},{shard_key:"z"},"zone3")
+
+use testShard
+db.document.insert({_id:"a"})
+db.document.insert({_id:13})
+db.document.insert({_id:23})
+ db.document.getShardDistribution()
+
+sh.addTagRange("testShard.document",{_id:"j"},{_id:"r"},"zone2")
+
+sh.addTagRange("testShard.document",{_id:"s"},{_id:"z"},"zone3")
+
+  "a-i"; shard 2 "j-r", shard 3 "s-z"
+
+  db.document.insert({shard_key:"a"})

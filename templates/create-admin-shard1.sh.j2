@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker exec -it {{ mongodb_shard1_container_name }} bash -c "echo 'db.createUser( { user: \"{{ mongo_admin }}\",pwd: \"{{ mongo_password }}\",roles: [ { role: \"root\", db: \"admin\" } ] })' | mongo admin"

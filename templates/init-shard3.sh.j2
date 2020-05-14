@@ -1,0 +1,3 @@
+#!/bin/bash
+
+docker exec -it {{ mongodb_shard3_container_name }} bash -c "echo 'rs.initiate({_id : \"{{ shard3_set_name }}\", version: 1, members: [{ _id : 0, host : \"{{ host3 }}:{{ mongodb_shard3_port }}\" },{ _id : 1, host : \"{{ host2 }}:{{ mongodb_shard3_port }}\" },{ _id : 2, host : \"{{ host1 }}:{{ mongodb_shard3_port }}\" }]})' | mongo admin -u {{ mongo_admin }} -p {{ mongo_password }}"

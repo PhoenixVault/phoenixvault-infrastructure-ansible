@@ -1,0 +1,30 @@
+---
+- hosts: shard3primary
+  remote_user: root
+  become: true
+  vars_files:
+    -  vars/default.yml
+ 
+
+  tasks:
+
+    
+    - name: Install the init shard 3 script
+      become: true
+      template:
+        src: "templates/init-shard3.sh.j2"
+        dest: "/root/init-shard3.sh"
+        owner: root
+        group: root
+        mode: 700
+
+    - name: Run the init shard 3 script
+      become: true
+      command: sh /root/init-shard3.sh
+
+ 
+
+     
+
+
+    

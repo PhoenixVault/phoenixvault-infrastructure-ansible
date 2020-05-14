@@ -1,0 +1,63 @@
+---
+- hosts: shard1
+  remote_user: root
+  become: true
+  vars_files:
+    -  vars/default.yml
+ 
+
+  tasks: 
+    shards:
+- container_name: phoenix-shard1
+  port: 27018
+  kind: shard
+  datadir: "/mongo_cluster/data1"
+  set_name: phoenixsh1
+  ipv4_addr: 167.71.122.181
+  hostname0: node1
+  hostname1: node2
+  hostname2: node3
+- container_name: phoenix-shard2
+  port: 27020
+  kind: shard
+  datadir: "/mongo_cluster/data2"
+  set_name: phoenixsh2
+  ipv4_addr: 157.245.235.127
+  hostname0: node2
+  hostname1: node1
+  hostname2: node3
+- container_name: phoenix-shard3
+  port: 27021
+  kind: shard
+  datadir: "/mongo_cluster/data3"
+  set_name: phoenixsh3
+  ipv4_addr: 167.172.207.53 
+  hostname0: node3
+  hostname1: node2
+  hostname2: node1
+
+json_config: |
+  rs.initiate({
+    _id : "{{ item.set_name }}", 
+    version: 1, 
+    members: [
+      { 
+        _id : 0, 
+        host : "{{ item.hostname0 }}:{{ item.port }}" 
+      },{ 
+        _id : 1, 
+        host : "{{ item.hostname1 }}:{{ item.port }}" 
+      },{ 
+        _id : 2, 
+        host : "{{ item.hostname2 }}:{{ item.port }}" 
+      }
+    ]
+  })
+
+
+command: "docker exec -it {{ item.container_name }} bash -c \"echo '{{ json_config }}'\"  | mongo admin -u {{ mongo_admin }} -p {{ mongo_password }}"
+    - name: iterate over servers
+      debug:
+        msg: "{{ item.ipv4_addr }} - {{ item.container_name }} [{{ item.port }}] {{ item.set_name }}"
+      with_items: "{{ shards|list }}"
+

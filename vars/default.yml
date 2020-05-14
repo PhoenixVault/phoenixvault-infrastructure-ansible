@@ -1,0 +1,68 @@
+#Name of the container when it's running
+mongodb_config_container_name: 'phoenix-config'
+mongodb_router_container_name: 'phoenix-router'
+mongodb_shard1_container_name: 'phoenix-shard1'
+mongodb_shard2_container_name: 'phoenix-shard2'
+mongodb_shard3_container_name: 'phoenix-shard3'
+
+# Port to be exposed to the host
+mongodb_port: 27017
+mongodb_router_port: 27019
+mongodb_shard1_port: 27018
+mongodb_shard2_port: 27020
+mongodb_shard3_port: 27021
+
+#directorys
+mongodb_dir_shard1: /mongo_cluster/data1
+mongodb_dir_shard2: /mongo_cluster/data2
+mongodb_dir_shard3: /mongo_cluster/data3
+mongodb_dir_config: /mongo_cluster/config
+mongodb_dir_router: /mongo_cluster/router
+
+# Mongo version
+mongodb_docker_image_tag: 4.2.6
+
+replica_set_name: phoenixrs1
+shard1_set_name: phoenixsh1
+shard2_set_name: phoenixsh2
+shard3_set_name: phoenixsh3
+
+# Admin username password
+mongo_password: Phoenix1!
+mongo_admin: mongo_admin
+
+#Servers in mongodb cluster
+host1: node1
+host2: node2
+host3: node3
+
+node1: 167.71.122.181
+node2: 157.245.235.127
+node3: 167.172.207.53
+
+shards:
+- container_name: phoenix-shard1   
+  port: 27018
+  kind: shard
+  datadir: "/mongo_cluster/data1"
+  set_name: phoenixsh1
+  ipv4_addr: 167.71.122.181
+- container_name: phoenix-shard2
+  port: 27020
+  kind: shard
+  datadir: "/mongo_cluster/data2"
+  set_name: phoenixsh2
+  ipv4_addr: 157.245.235.127
+- container_name: phoenix-shard3
+  port: 27021
+  kind: shard
+  datadir: "/mongo_cluster/data3"
+  set_name: phoenixsh3
+  ipv4_addr: 167.172.207.53
+     
+            
+           
+           
+        
+
+

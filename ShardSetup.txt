@@ -1,0 +1,55 @@
+mongod --configsvr --replSet rs0 --dbpath /data/db1 
+mongod --configsvr --replSet phoenixrs1 --keyFile /data/db/secret
+echo "127.0.0.1  node1" >> /etc/hosts
+cat /etc/hosts
+db.createUser({  
+ user:"mongo-admin",
+ pwd:"password",
+ roles:[  
+  {  
+     role:"root",
+     db:"admin"
+  }
+ ]
+})
+
+
+db.createUser({user: "mongo-admin", pwd: "password", roles:[{role: "root", db: "admin"}], mechanisms:["SCRAM-SHA-1"]})
+sudo chown mongod:mongo-admin /opt/mongo/mongo-keyfile
+
+mongo mongo mongo-config-1:27019 -u mongo-admin -p --authenticationDatabase admin27019 -u mongo-admin -p --authenticationDatabase admin
+
+mongo --host 159.65.181.44 --port 27019
+
+
+sh.addShard("rs0/167.99.127.238:27019")
+
+docker run --name config -d mongo:4.2.6 --configsvr --replSet rs0 --dbpath /data/db --port 27017
+rs.initiate(
+  {
+    _id: "phoenixrs1",
+    configsvr: true,
+    members: [
+      { _id : 0, host : "node1:27017" }
+    ]
+  }
+)
+mongodb_host_dir: /etc/mongo
+mongodb_datadir: /data/db
+mongodb_logdir: /var/log/mongodb
+
+
+
+ - name: Run mongodb container
+      docker_container:
+        name: 'container1'
+        image: 'docker.io/mongo:4.2.5'
+        command: mongod --configsvr --replSet rs01
+        restart_policy: always
+        state: started
+        ports:
+          - "27017:27107"
+        volumes: 
+          - '/etc/mongo:/data/db'
+          - '/var/log/mongodb:/var/log/mongodb'
+          - '/etc/mongo/secret:/data/db/secret'
