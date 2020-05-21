@@ -1,0 +1,14 @@
+[all:vars]
+ansible_connection=ssh
+ansible_user=jd
+ansible_ssh_pass=toor
+
+
+[hosts]
+10.20.0.16
+10.20.0.41
+10.20.0.36
+10.20.0.42
+10.20.0.43
+10.20.0.44
+10.20.0.45

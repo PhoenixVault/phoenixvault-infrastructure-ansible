@@ -1,0 +1,32 @@
+---
+- hosts: config_children
+  become: true
+  vars_files:
+    -  vars/default.yml
+ 
+
+  tasks:
+    - name: Change file ownership, group and permissions
+      file:
+        path: '{{ mongodb_dir }}'
+        owner: '{{ ansible_user }}'
+        group: '{{ ansible_user }}'
+        mode: '777'
+
+    - name: Change file ownership, group and permissions
+      file:
+        path: '{{ mongodb_dir }}{{ ansible_hostname }}'
+        owner: '{{ ansible_user }}'
+        group: '{{ ansible_user }}'
+        mode: '777'
+
+    - name: Run mongodb container
+      become: true
+      docker_container:
+        name: "{{ hostvars[inventory_hostname]['hostname'] }}"
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        restart_policy: always
+        state: started
+        volumes: 
+          - "{{ mongodb_dir }}:/data/db"
+    

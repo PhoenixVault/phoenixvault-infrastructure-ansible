@@ -1,0 +1,2 @@
+sudo hostnamectl set-hostname config2
+rm -fr /home/jd/.ssh/known_hosts

@@ -1,5 +1,4 @@
 ---
----
 - hosts: shard1
   remote_user: root
   become: true

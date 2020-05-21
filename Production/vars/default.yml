@@ -1,0 +1,17 @@
+ubuntu_version: 'ubuntu focal'
+ansible_user: 'jd'
+ansible_password: 'toor'
+
+mongodb_user: phoenix
+mongodb_passwd: Phoenix1!
+mongodb_group: phoenix_group
+
+mongodb_dir: /mongo_cluster/
+
+# Mongo version
+mongodb_docker_image_tag: 4.2.6
+
+mongodb_port: 27017
+mongodb_shard1_port: 27018
+mongodb_shard2_port: 27019
+mongodb_shard3_port: 27020

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+ssh-keygen
+ssh-copy-id -f $argv

@@ -1,0 +1,17 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+    -  vars/default.yml
+
+  tasks: 
+    - debug: var=hostvars[inventory_hostname]['ansible_default_ipv4']['address']
+    - debug: var=hostvars[inventory_hostname]['mongo_type']
+    - name: iterate over servers
+      debug:
+        msg: "{{ hostvars[inventory_hostname]['mongo_type'] }}"
+        msg: "{{ hostvars[inventory_hostname]['hostname'] }}"
+        msg: "{{ vars['isPrimary'] }}"
+
+
+    
