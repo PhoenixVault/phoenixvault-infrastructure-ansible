@@ -1,0 +1,124 @@
+---
+- hosts: config_primary,config_children,router_primary
+  become: true
+  vars_files:
+    -  vars/default.yml
+ 
+
+  tasks:
+    - name: Ensure "{{ hostvars[inventory_hostname]['mongo_dir'] }}" exist
+      file:
+        name: "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir'] }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0775
+        
+    - name: Copy secret file"
+      copy:
+        src: vars/secret
+        dest: "/home/phoenix/{{ hostvars[inventory_hostname]['mongo_dir'] }}secret"
+        owner: "{{ mongodb_user }}"
+        group: "{{ docker_group }}"
+        mode: 0400
+        
+    - name: Run mongodb container
+      become: true
+      docker_container:
+        name: "{{ hostvars[inventory_hostname]['container_name'] }}"
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        restart_policy: always
+        state: started
+        volumes: 
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir'] }}:/data/db"
+
+    - name: Copy the admin script
+      become: true
+      template:
+        src: "templates/create-admin-cr.sh.j2"
+        dest: "/root/create-admin-cr.sh"
+        owner: root
+        group: root
+        mode: 700
+
+    # - name: Run the add user script
+    #   become: true
+    #   command: sh /root/create-admin-cr.sh    
+
+    - name: Stop mongodb container
+      become: true
+      docker_container:
+        name: "{{ hostvars[inventory_hostname]['container_name'] }}"
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        state: stopped
+        volumes: 
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir'] }}:/data/db"
+
+
+- hosts: config_primary,config_children
+  become: true
+  vars_files:
+    -  vars/default.yml
+
+  tasks: 
+    - name: Run mongodb container --configsvr
+      docker_container:
+        name: "{{ hostvars[inventory_hostname]['container_name'] }}"
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        command: "mongod --configsvr --replSet {{ hostvars[inventory_hostname]['configRepSetName'] }} --keyFile {{ hostvars[inventory_hostname]['mongo_dir'] }}secret --dbpath /data/db --port {{ hostvars[inventory_hostname]['mongo_port'] }}" #--configsvr  --replSet {{ replica_set_name }}' #--keyFile {{ mongodb_datadir }}/secret'
+        restart_policy: always
+        state: started
+        exposed_ports: "{{ hostvars[inventory_hostname]['mongo_port'] }}"
+        # etc_hosts: >
+        #   {      
+        #     "{{ host1 }}": "{{ node1 }}",
+        #     "{{ host2 }}": "{{ node2 }}",
+        #     "{{ host3 }}": "{{ node3 }}"
+        #   }
+        #entrypoint: /entrypoint.sh
+        ports:
+          - "{{ mongodb_port }}:{{ mongodb_port }}"
+        volumes: 
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir'] }}secret:{{ hostvars[inventory_hostname]['mongo_dir'] }}secret"
+          - '/etc/localtime:/etc/localtime:ro'
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir'] }}:/data/db"
+
+- hosts: config_primary
+  become: true
+  vars_files:
+    -  vars/default.yml
+
+  tasks: 
+    - name: Create the file to initialize mongod replica set
+      become: true
+      template:
+        src: "templates/primary-init.sh.j2"
+        dest: "/home/{{mongodb_user}}/primary-init.sh"
+        owner: root
+        group: root
+        mode: 700
+
+    - name: Run the init config script
+      become: true
+      command: sh /home/{{mongodb_user}}/primary-init.sh
+
+- hosts: router_primary
+  become: true
+  vars_files:
+    -  vars/default.yml
+
+  tasks: 
+    - name: Run mongodb router container
+      docker_container:
+        name: "{{ hostvars[inventory_hostname]['container_name'] }}"
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        command: "mongos --configdb {{ hostvars[inventory_hostname]['configRepSetName'] }}/{{ hostvars[inventory_hostname]['configSet'] }} --keyFile {{ hostvars[inventory_hostname]['mongo_dir'] }}secret --port {{ hostvars[inventory_hostname]['mongo_port'] }}"
+        restart_policy: always
+        state: started
+        exposed_ports: "{{ hostvars[inventory_hostname]['mongo_port'] }}"
+        ports:
+          - "{{ mongodb_port }}:{{ mongodb_port }}"
+        volumes: 
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir'] }}secret:{{ hostvars[inventory_hostname]['mongo_dir'] }}secret"
+          - '/etc/localtime:/etc/localtime:ro'
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir'] }}:/data/db"

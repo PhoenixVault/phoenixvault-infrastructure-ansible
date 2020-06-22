@@ -1,0 +1,101 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+    -  vars/default.yml
+
+  tasks: 
+    - name: Install required packages
+      apt: name={{ item }} state=latest update_cache=yes
+      loop: ['aptitude','apt-transport-https','ca-certificates','curl','software-properties-common','python3-pip','virtualenv','python3-setuptools','mongodb-clients','mongodb-server-core']
+
+    - name: Make sure we have a '{{ docker_group }}' group
+      group:
+        name: "{{ docker_group }}"
+        state: present
+
+    - name: Allow '{{ docker_group }}' group to have passwordless sudo
+      lineinfile:
+        dest: /etc/sudoers
+        state: present
+        regexp: '^%{{ docker_group }}'
+        line: '%{{ docker_group }} ALL=(ALL) NOPASSWD: ALL'
+        validate: 'visudo -cf %s'
+
+    - name: Add sudoers users to {{ docker_group }} group
+      user: name={{ mongodb_user }} groups={{ docker_group }} append=yes state=present createhome=yes
+
+    - name: Set up authorized keys for the deployer user
+      authorized_key: user={{ mongodb_user }} key="{{item}}"
+      with_file:
+        - '{{ ssh_key_location }}'
+
+
+    - name: Install docker.io
+      apt: name=docker.io state=latest update_cache=yes
+
+    - name: Update ssl database
+      become: true
+      command: update-ca-certificates
+      
+    - name: Add Docker GPG apt key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker Repository for {{ ubuntu_version }}
+      apt_repository:
+        repo: deb https://download.docker.com/linux/{{ ubuntu_version }} stable
+        state: present
+
+    - name: Update the repository cache and update package "docker" to latest version
+      apt:
+        name: docker
+        state: latest
+        update_cache: yes
+
+    - name: Install docker module for python
+      pip:
+        name: docker
+        
+    - name: Open ports ufw
+      become: true 
+      ufw: 
+        rule: allow 
+        port: "{{ item }}"
+        proto: tcp
+      with_items: 
+        - ssh
+        - domain
+        - 27017
+        - 27020
+        - 27021  
+        - 27022
+        
+    - name: Enable ufw
+      become: true
+      ufw: 
+        state: enabled
+        policy: deny
+
+    - name: Reboot a slow machine that might have lots of updates to apply
+      reboot:
+        reboot_timeout: 3600
+
+    # - name: Ensure {{ mongodb_dir }}hostname exist
+    #   file:
+    #     name: '{{ mongodb_dir }}{{ ansible_hostname }}'
+    #     state: directory
+
+    # - name: Ensure {{ mongodb_dir }}hostname/secret exist
+    #   file:
+    #     name: '{{ mongodb_dir }}{{ ansible_hostname }}/secret'
+    #     state: directory
+
+    # - name: Copy secret file {{ mongodb_dir }}hostname/secret
+    #   copy:
+    #     src: pubkey
+    #     dest: '{{ mongodb_dir }}{{ ansible_hostname }}/secret/pubkey'
+    #     owner: root
+    #     mode: 0400
+        

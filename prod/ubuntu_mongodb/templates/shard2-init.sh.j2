@@ -1,0 +1,22 @@
+#!/bin/bash
+
+docker exec -it {{ hostvars[inventory_hostname]['container_name2'] }} bash -c "echo 'rs.initiate(
+   {
+      _id: \"{{ hostvars[inventory_hostname]['shardRepSetName2'] }}\",
+      version: 1,
+      members: [
+{% for host in groups['shard_primary2'] %}
+          { _id: {{ loop.index - 1 }}, host: \"{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ hostvars[inventory_hostname]['container_port2'] }}\" }
+{%- if loop.last %}, {%- elif loop %},
+{% endif %}
+{% endfor %}
+
+{% for host in groups['shard_children2'] %}
+          { _id: {{ loop.index }}, host: \"{{ hostvars[host]['inventory_hostname'] }}:{{ hostvars[inventory_hostname]['container_port2'] }}\" }
+{%- if loop.last %} {%- elif loop %},
+{% endif %}
+{% endfor %}      
+      ]
+   }
+)' | mongo -port {{ hostvars[inventory_hostname]['container_port2'] }} -u {{ mongodb_admin }} -p {{ mongodb_passwd }}"
+

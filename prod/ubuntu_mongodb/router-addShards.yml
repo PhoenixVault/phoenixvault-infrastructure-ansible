@@ -1,0 +1,46 @@
+---
+- hosts: router_primary
+  remote_user: root
+  become: true
+  vars_files:
+    -  vars/default.yml
+ 
+  tasks:
+    - name: Install add shard 0 script
+      become: true
+      template:
+        src: "templates/addshard0.sh.j2"
+        dest: "/home/phoenix/addshard0.sh"
+        owner: root
+        group: root
+        mode: 700
+
+    - name: Run the add shard 0 script
+      become: true
+      command: sh /home/phoenix/addshard0.sh
+
+    - name: Install add shard 1 script
+      become: true
+      template:
+        src: "templates/addshard1.sh.j2"
+        dest: "/home/phoenix/addshard1.sh"
+        owner: root
+        group: root
+        mode: 700
+
+    - name: Run the add shard 1 script
+      become: true
+      command: sh /home/phoenix/addshard1.sh
+
+    - name: Install add shard 2 script
+      become: true
+      template:
+        src: "templates/addshard2.sh.j2"
+        dest: "/home/phoenix/addshard2.sh"
+        owner: root
+        group: root
+        mode: 700
+
+    - name: Run the add shard 2 script
+      become: true
+      command: sh /home/phoenix/addshard2.sh

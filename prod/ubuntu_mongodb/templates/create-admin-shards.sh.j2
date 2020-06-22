@@ -1,0 +1,7 @@
+#!/bin/bash
+
+docker exec -it {{ container_name0 }} bash -c "echo 'db.createUser( { user: \"{{ mongodb_admin }}\",pwd: \"{{ mongodb_passwd }}\",roles: [ { role: \"root\", db: \"admin\" } ] })' | mongo -port {{ hostvars[inventory_hostname]['container_port0']  }} admin"
+
+docker exec -it {{ container_name1 }} bash -c "echo 'db.createUser( { user: \"{{ mongodb_admin }}\",pwd: \"{{ mongodb_passwd }}\",roles: [ { role: \"root\", db: \"admin\" } ] })' | mongo -port {{ hostvars[inventory_hostname]['container_port1']  }} admin"
+
+docker exec -it {{ container_name2 }} bash -c "echo 'db.createUser( { user: \"{{ mongodb_admin }}\",pwd: \"{{ mongodb_passwd }}\",roles: [ { role: \"root\", db: \"admin\" } ] })' | mongo -port {{ hostvars[inventory_hostname]['container_port2']  }} admin"

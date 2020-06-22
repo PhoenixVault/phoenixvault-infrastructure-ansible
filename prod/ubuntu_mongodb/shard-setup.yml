@@ -1,0 +1,263 @@
+---
+- hosts: shard_primary0,shard_primary1,shard_primary2
+  become: true
+  vars_files:
+    -  vars/default.yml
+ 
+
+  tasks:
+    - name: Ensure "{{ hostvars[inventory_hostname]['mongo_dir0'] }}" exist
+      file:
+        name: "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir0'] }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0775
+        
+    - name: Copy secret file"
+      copy:
+        src: vars/secret
+        dest: "/home/phoenix/{{ hostvars[inventory_hostname]['mongo_dir0'] }}secret"
+        owner: root
+        group: root
+        mode: 0400
+
+    - name: Ensure "{{ hostvars[inventory_hostname]['mongo_dir1'] }}" exist
+      file:
+        name: "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir1'] }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0775
+        
+    - name: Copy secret file"
+      copy:
+        src: vars/secret
+        dest: "/home/phoenix/{{ hostvars[inventory_hostname]['mongo_dir1'] }}secret"
+        owner: root
+        group: root
+        mode: 0400
+
+    - name: Ensure "{{ hostvars[inventory_hostname]['mongo_dir2'] }}" exist
+      file:
+        name: "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir2'] }}"
+        state: directory
+        owner: root
+        group: root
+        mode: 0775
+        
+    - name: Copy secret file"
+      copy:
+        src: vars/secret
+        dest: "/home/phoenix/{{ hostvars[inventory_hostname]['mongo_dir2'] }}secret"
+        owner: root
+        group: root
+        mode: 0400 
+
+    - name: Run mongodb container shard0
+      become: true
+      docker_container:
+        name: "{{ hostvars[inventory_hostname]['container_name0'] }}"
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        command: "mongod --port {{ hostvars[inventory_hostname]['container_port0'] }}"
+        restart_policy: always
+        state: started
+        exposed_ports: "{{ hostvars[inventory_hostname]['container_port0']  }}"
+        ports:
+          - "{{ hostvars[inventory_hostname]['container_port0']  }}:{{ mongodb_port }}"
+        volumes: 
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir0'] }}:/data/db"
+
+    - name: Run mongodb container shard1
+      become: true
+      docker_container:
+        name: "{{ hostvars[inventory_hostname]['container_name1'] }}"
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        command: "mongod --port {{ hostvars[inventory_hostname]['container_port1'] }}"
+        restart_policy: always
+        state: started
+        exposed_ports: "{{ hostvars[inventory_hostname]['container_port1']  }}"
+        ports:
+          - "{{ hostvars[inventory_hostname]['container_port1']  }}:{{ mongodb_port }}"
+        volumes: 
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir1'] }}:/data/db"
+
+    - name: Run mongodb container shard2
+      become: true
+      docker_container:
+        name: "{{ hostvars[inventory_hostname]['container_name2'] }}"
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        command: "mongod --port {{ hostvars[inventory_hostname]['container_port2'] }}"
+        restart_policy: always
+        state: started
+        exposed_ports: "{{ hostvars[inventory_hostname]['container_port2']  }}"
+        ports:
+          - "{{ hostvars[inventory_hostname]['container_port2']  }}:{{ mongodb_port }}"
+        volumes: 
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir2'] }}:/data/db"
+
+    - name: Copy the admin script
+      become: true
+      template:
+        src: "templates/create-admin-shards.sh.j2"
+        dest: "/home/phoenix/create-admin-shards.sh"
+        owner: root
+        group: root
+        mode: 700
+
+    # - name: Run the add user script
+    #   become: true
+    #   command: sh /home/phoenix/create-admin-shards.sh  
+
+    - name: Stop mongodb container shard0
+      become: true
+      docker_container:
+        name: "{{ hostvars[inventory_hostname]['container_name0'] }}"
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        state: stopped
+        volumes: 
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir0'] }}:/data/db"
+
+    - name: Stop mongodb container shard1
+      become: true
+      docker_container:
+        name: "{{ hostvars[inventory_hostname]['container_name1'] }}"
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        state: stopped
+        volumes: 
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir1'] }}:/data/db"
+
+
+    - name: Stop mongodb container shard2
+      become: true
+      docker_container:
+        name: "{{ hostvars[inventory_hostname]['container_name2'] }}"
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        state: stopped
+        volumes: 
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir2'] }}:/data/db"
+
+    - name: Run mongodb container --shardsvr shard0
+      docker_container:
+        name: "{{ hostvars[inventory_hostname]['container_name0'] }}"
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        command: "mongod --shardsvr --replSet {{ hostvars[inventory_hostname]['shardRepSetName0'] }} --keyFile {{ hostvars[inventory_hostname]['mongo_dir0'] }}secret --dbpath /data/db --port {{ hostvars[inventory_hostname]['container_port0'] }}"
+        restart_policy: always
+        state: started
+        exposed_ports: "{{ hostvars[inventory_hostname]['container_port0']  }}"
+        ports:
+          - "{{ hostvars[inventory_hostname]['container_port0']  }}:{{ hostvars[inventory_hostname]['container_port0']  }}"
+        volumes: 
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir0'] }}secret:{{ hostvars[inventory_hostname]['mongo_dir0'] }}secret"
+          - '/etc/localtime:/etc/localtime:ro'
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir0'] }}:/data/db"
+
+    - name: Run mongodb container --shardsvr shard1
+      docker_container:
+        name: "{{ hostvars[inventory_hostname]['container_name1'] }}"
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        command: "mongod --shardsvr --replSet {{ hostvars[inventory_hostname]['shardRepSetName1'] }} --keyFile {{ hostvars[inventory_hostname]['mongo_dir1'] }}secret --dbpath /data/db --port {{ hostvars[inventory_hostname]['container_port1'] }}"
+        restart_policy: always
+        state: started
+        exposed_ports: "{{ hostvars[inventory_hostname]['container_port1']  }}"
+        ports:
+          - "{{ hostvars[inventory_hostname]['container_port1']  }}:{{ hostvars[inventory_hostname]['container_port1']  }}"
+        volumes: 
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir1'] }}secret:{{ hostvars[inventory_hostname]['mongo_dir1'] }}secret"
+          - '/etc/localtime:/etc/localtime:ro'
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir1'] }}:/data/db"
+
+    - name: Run mongodb container --shardsvr shard2
+      docker_container:
+        name: "{{ hostvars[inventory_hostname]['container_name2'] }}"
+        image: 'docker.io/mongo:{{ mongodb_docker_image_tag }}'
+        command: "mongod --shardsvr --replSet {{ hostvars[inventory_hostname]['shardRepSetName2'] }} --keyFile {{ hostvars[inventory_hostname]['mongo_dir2'] }}secret --dbpath /data/db --port {{ hostvars[inventory_hostname]['container_port2'] }}"
+        restart_policy: always
+        state: started
+        exposed_ports: "{{ hostvars[inventory_hostname]['container_port2']  }}"
+        ports:
+          - "{{ hostvars[inventory_hostname]['container_port2']  }}:{{ hostvars[inventory_hostname]['container_port2']  }}"
+        volumes: 
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir2'] }}secret:{{ hostvars[inventory_hostname]['mongo_dir2'] }}secret"
+          - '/etc/localtime:/etc/localtime:ro'
+          - "/home/{{mongodb_user}}/{{ hostvars[inventory_hostname]['mongo_dir2'] }}:/data/db"
+
+- hosts: shard_primary0
+  remote_user: root
+  become: true
+  vars_files:
+    -  vars/default.yml
+ 
+  tasks:
+    - name: Install the init shard 0 script
+      become: true
+      template:
+        src: "templates/shard0-init.sh.j2"
+        dest: "/home/phoenix/shard0-init.sh"
+        owner: root
+        group: root
+        mode: 700
+
+    - name: Run the init shard 0 script
+      become: true
+      command: sh /home/phoenix/shard0-init.sh
+
+- hosts: shard_primary1
+  remote_user: root
+  become: true
+  vars_files:
+    -  vars/default.yml
+ 
+  tasks:
+    - name: Install the init shard 1 script
+      become: true
+      template:
+        src: "templates/shard1-init.sh.j2"
+        dest: "/home/phoenix/shard1-init.sh"
+        owner: root
+        group: root
+        mode: 700
+
+    - name: Run the init shard 1 script
+      become: true
+      command: sh /home/phoenix/shard1-init.sh
+
+- hosts: shard_primary2
+  remote_user: root
+  become: true
+  vars_files:
+    -  vars/default.yml
+ 
+  tasks:
+    - name: Install the init shard 2 script
+      become: true
+      template:
+        src: "templates/shard2-init.sh.j2"
+        dest: "/home/phoenix/shard2-init.sh"
+        owner: root
+        group: root
+        mode: 700
+
+    - name: Run the init shard 2 script
+      become: true
+      command: sh /home/phoenix/shard2-init.sh
+
+- hosts: router_primary
+  remote_user: root
+  become: true
+  vars_files:
+    -  vars/default.yml
+ 
+  tasks:
+    - name: Install add shard 0 script
+      become: true
+      template:
+        src: "templates/addshard0.sh.j2"
+        dest: "/home/phoenix/addshard0.sh"
+        owner: root
+        group: root
+        mode: 700
+
+    # - name: Run the add shard 0 script
+    #   become: true
+    #   command: sh /home/phoenix/addshard0.sh

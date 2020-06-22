@@ -1,0 +1,42 @@
+---
+- hosts: config_primary:parent
+  tasks: 
+    - debug: var=hostvars[inventory_hostname]['ansible_default_ipv4']['address']
+# - hosts: config_primary,config_chidlren
+#   become: true
+#   vars_files:
+#     -  vars/default.yml
+
+  # tasks: 
+  #   - debug: var=hostvars[inventory_hostname]['ansible_default_ipv4']['address']
+  #   - debug: var=hostvars[inventory_hostname]['mongo_type']
+  #   - name: iterate over config servers
+  #     debug:
+  #       msg: "{{ hostvars[inventory_hostname]['mongo_type'] }}"
+  #       msg: "{{ hostvars[inventory_hostname]['hostname'] }}"
+  #       msg: "{{ vars['isPrimary'] }}"
+
+
+# - hosts: config_primary
+#   tasks: 
+#     - debug: var=hostvars[inventory_hostname]['ansible_default_ipv4']['address']
+
+
+#     - debug: var=hostvars[inventory_hostname]['mongo_type']
+#     - debug: var=hostvars[inventory_hostname]['mongo_dir0']
+#     - debug: var=hostvars[inventory_hostname]['mongo_dir1']
+   
+#     - debug:
+#         msg: "{{ hostvars[inventory_hostname]['mongo_dir2'] }}"
+    # - name: iterate over shard servers
+    #   debug:
+    #     msg: "{{ hostvars[inventory_hostname]['mongo_type'] }}"
+    #     msg: "{{ hostvars[inventory_hostname]['hostname'] }}"
+    #     msg: "{{ hostvars[inventory_hostname]['mongo_dir0'] }}"
+    #     msg: "{{ hostvars[inventory_hostname]['mongo_dir1'] }}"
+    #     msg: "{{ hostvars[inventory_hostname]['mongo_dir2'] }}"
+
+
+
+
+    

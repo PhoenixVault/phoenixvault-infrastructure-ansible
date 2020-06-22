@@ -1,10 +1,12 @@
 ubuntu_version: 'ubuntu focal'
-ansible_user: 'jd'
-ansible_password: 'toor'
+ansible_user: 'phoenix'
+ansible_password: 'Phoenix1!'
+ssh_key_location: '/home/jd/.ssh/id_rsa.pub'
 
 mongodb_user: phoenix
+mongodb_admin: phoenix_admin
 mongodb_passwd: Phoenix1!
-mongodb_group: phoenix_group
+docker_group: docker
 
 mongodb_dir: /mongo_cluster/
 

@@ -1,0 +1,6 @@
+#!/bin/bash
+
+docker exec -it {{ hostvars[inventory_hostname]['container_name'] }} bash -c "echo 'sh.addShard(
+\"{{ hostvars[inventory_hostname]['shardSet2'] }}\"
+ )' | mongo -port {{ hostvars[inventory_hostname]['mongo_port'] }} -u {{ mongodb_admin }} -p {{ mongodb_passwd }}"
+
