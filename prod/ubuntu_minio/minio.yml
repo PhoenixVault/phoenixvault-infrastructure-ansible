@@ -25,27 +25,3 @@
           - "10.20.0.99:9000:9000"
 
 
-- hosts: client
-  become: true
-  vars_files:
-    -  vars/default.yml
-
-  tasks: 
-    - name: Ensure /home/"{{minio_user}}"/phoenixvault exist
-      file:
-        name: "/home/{{minio_user}}/phoenixvault"
-        state: directory
-        owner: root
-        group: root
-        mode: 0775
-
-    - name: Run minio container
-      become: true
-      docker_container:
-        name: minio
-        image: minio/minio
-        command: minio/mc ls play
-        restart_policy: always
-        state: started
-        ports:
-          - "10.20.0.99:9000:9000"
