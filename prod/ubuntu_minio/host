@@ -1,0 +1,5 @@
+[server]
+10.20.0.99 ansible_connection=ssh ansible_user=phoenix ansible_ssh_pass=Phoenix1!  ansible_sudo_pass=Phoenix1! 
+
+[client]
+10.20.0.98 ansible_connection=ssh ansible_user=phoenix ansible_ssh_pass=Phoenix1!  ansible_sudo_pass=Phoenix1! 

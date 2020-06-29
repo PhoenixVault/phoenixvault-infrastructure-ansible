@@ -1,0 +1,11 @@
+ubuntu_version: 'ubuntu focal'
+ansible_user: 'phoenix'
+ansible_password: 'Phoenix1!'
+ssh_key_location: '/home/jd/.ssh/id_rsa.pub'
+
+minio_user: phoenix
+minio_passwd: Phoenix1!
+docker_group: docker
+
+
+
